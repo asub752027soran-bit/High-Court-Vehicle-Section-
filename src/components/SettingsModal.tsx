@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SheetSettings } from '../types/fuel';
-import { Settings, X, Check, RotateCcw } from 'lucide-react';
+import { Settings, X, Check, RotateCcw, Trash2 } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetDemoData,
 }) => {
   const [draft, setDraft] = useState<SheetSettings>({ ...settings });
+  const [confirmWipe, setConfirmWipe] = useState(false);
 
   if (!isOpen) return null;
 
@@ -143,20 +144,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="block font-semibold text-neutral-500 uppercase tracking-wider text-[10px]">
               Ledger Management
             </label>
-            <div className="flex gap-2">
+            {!confirmWipe ? (
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm('Wipe all rows and reset to an empty spreadsheet?')) {
-                    onClearAllRecords();
-                    onClose();
-                  }
-                }}
-                className="w-full py-2 px-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors text-center border border-red-200 dark:border-red-900/50 font-medium"
+                onClick={() => setConfirmWipe(true)}
+                className="w-full py-2 px-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors text-center border border-red-200 dark:border-red-900/50 font-medium text-xs flex items-center justify-center gap-1.5"
               >
-                Clear All Rows (Wipe Ledger)
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear All Rows (Wipe Ledger)</span>
               </button>
-            </div>
+            ) : (
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg space-y-2 text-xs">
+                <p className="font-semibold text-red-800 dark:text-red-200">
+                  Are you sure you want to delete all entries?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClearAllRecords();
+                      setConfirmWipe(false);
+                      onClose();
+                    }}
+                    className="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow-xs"
+                  >
+                    Yes, Wipe All Data
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmWipe(false)}
+                    className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,14 +1,19 @@
 import React from 'react';
 import { FuelRecord, SheetSettings } from '../types/fuel';
 import { calculateFleetStats } from '../utils/fuelUtils';
-import { Fuel, Receipt, Truck, Calendar, DollarSign, Clock } from 'lucide-react';
+import { Fuel, Receipt, Truck, Calendar, DollarSign, Clock, Edit3 } from 'lucide-react';
 
 interface FleetStatsStripProps {
   records: FuelRecord[];
   settings: SheetSettings;
+  onOpenRateModal?: () => void;
 }
 
-export const FleetStatsStrip: React.FC<FleetStatsStripProps> = ({ records, settings }) => {
+export const FleetStatsStrip: React.FC<FleetStatsStripProps> = ({
+  records,
+  settings,
+  onOpenRateModal,
+}) => {
   const stats = calculateFleetStats(records);
 
   return (
@@ -90,10 +95,30 @@ export const FleetStatsStrip: React.FC<FleetStatsStripProps> = ({ records, setti
       </div>
 
       {/* 6. Active Fuel Rates (Diesel & Petrol) */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5 shadow-sm">
+      <div
+        onClick={onOpenRateModal}
+        className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-3.5 shadow-sm transition-all ${
+          onOpenRateModal ? 'cursor-pointer hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-md' : ''
+        }`}
+        title={onOpenRateModal ? 'Click to fix or update current fuel rates' : undefined}
+      >
         <div className="flex items-center justify-between text-neutral-500 mb-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider">Current Rates</span>
-          <Fuel className="w-4 h-4 text-amber-500" />
+          {onOpenRateModal ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenRateModal();
+              }}
+              className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+            >
+              <Edit3 className="w-3 h-3" />
+              <span>Fix</span>
+            </button>
+          ) : (
+            <Fuel className="w-4 h-4 text-amber-500" />
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <div className="text-xs sm:text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200 flex justify-between items-center">
@@ -105,8 +130,11 @@ export const FleetStatsStrip: React.FC<FleetStatsStripProps> = ({ records, setti
             <span>{settings.currencySymbol}{(settings.petrolRate ?? 103.5).toFixed(2)}/L</span>
           </div>
         </div>
-        <div className="text-[10px] text-neutral-400 mt-1">
-          Auto-applied by grade
+        <div className="text-[10px] text-neutral-400 mt-1 flex items-center justify-between">
+          <span>Auto-applied by grade</span>
+          {onOpenRateModal && (
+            <span className="text-amber-600 dark:text-amber-400 font-medium">Click to fix →</span>
+          )}
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   Upload,
   Printer,
   Plus,
+  Settings,
 } from 'lucide-react';
 
 interface TopNavigationProps {
@@ -18,6 +19,7 @@ interface TopNavigationProps {
   onExportCsv: () => void;
   onOpenImport: () => void;
   onOpenPrint: () => void;
+  onOpenSettings?: () => void;
   totalRecordsCount: number;
 }
 
@@ -28,6 +30,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
   onExportCsv,
   onOpenImport,
   onOpenPrint,
+  onOpenSettings,
   totalRecordsCount,
 }) => {
   return (
@@ -133,6 +136,16 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             >
               <Printer className="w-4 h-4" />
             </button>
+
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                title="Rates & Ledger Settings"
+                className="p-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
 
             <button
               onClick={onOpenQuickAdd}

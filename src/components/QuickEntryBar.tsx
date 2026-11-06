@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FuelRecord, SheetSettings } from '../types/fuel';
 import { getTodayDateString, getYesterdayDateString } from '../utils/fuelUtils';
-import { Plus, Check, Sparkles, Fuel } from 'lucide-react';
+import { Plus, Check, Sparkles, Fuel, Edit3 } from 'lucide-react';
 
 interface QuickEntryBarProps {
   onAddRecord: (record: Omit<FuelRecord, 'id' | 'createdAt'>) => FuelRecord | void;
@@ -9,6 +9,7 @@ interface QuickEntryBarProps {
   suggestedNextCoupon: string;
   settings: SheetSettings;
   onUpdateSettings: (newSettings: Partial<SheetSettings>) => void;
+  onOpenRateModal?: () => void;
 }
 
 // Known petrol units in the fleet
@@ -20,28 +21,25 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
   suggestedNextCoupon,
   settings,
   onUpdateSettings,
+  onOpenRateModal,
 }) => {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [fuelType, setFuelType] = useState<FuelRecord['fuelType']>('Diesel');
   const [fuelAmount, setFuelAmount] = useState('');
   const [couponNumber, setCouponNumber] = useState('');
   const [date, setDate] = useState(getTodayDateString());
-  const [ratePerUnit, setRatePerUnit] = useState<string>(
-    (settings.dieselRate ?? 94.5).toString()
-  );
   const [showSuccessBadge, setShowSuccessBadge] = useState(false);
   const [showVehicleSuggestions, setShowVehicleSuggestions] = useState(false);
 
   const vehicleInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const couponInputRef = useRef<HTMLInputElement>(null);
-  const rateInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync rate when fuelType or settings changes
+  // Active rate based on selected fuel type
+  const currentRate = fuelType === 'Petrol' ? (settings.petrolRate ?? 103.5) : (settings.dieselRate ?? 94.5);
+
   const handleSelectFuelType = (type: 'Diesel' | 'Petrol') => {
     setFuelType(type);
-    const targetRate = type === 'Petrol' ? (settings.petrolRate ?? 103.5) : (settings.dieselRate ?? 94.5);
-    setRatePerUnit(targetRate.toString());
   };
 
   // Auto-detect fuel type based on vehicle
@@ -50,23 +48,8 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
     const upper = val.trim().toUpperCase();
     if (KNOWN_PETROL_VEHICLES.has(upper)) {
       setFuelType('Petrol');
-      setRatePerUnit((settings.petrolRate ?? 103.5).toString());
     } else if (upper.startsWith('OD-05-') && fuelType === 'Petrol' && !KNOWN_PETROL_VEHICLES.has(upper)) {
       setFuelType('Diesel');
-      setRatePerUnit((settings.dieselRate ?? 94.5).toString());
-    }
-  };
-
-  // Update custom rate and persist to settings for that fuel type
-  const handleCustomRateChange = (val: string) => {
-    setRatePerUnit(val);
-    const num = parseFloat(val);
-    if (!isNaN(num) && num > 0) {
-      if (fuelType === 'Petrol') {
-        onUpdateSettings({ petrolRate: num });
-      } else {
-        onUpdateSettings({ dieselRate: num, defaultRate: num });
-      }
     }
   };
 
@@ -83,9 +66,8 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
   );
 
   const parsedAmount = parseFloat(fuelAmount) || 0;
-  const parsedRate = parseFloat(ratePerUnit) || 0;
   // Automatic calculation of amount
-  const liveTotalAmount = Number((parsedAmount * parsedRate).toFixed(2));
+  const liveTotalAmount = Number((parsedAmount * currentRate).toFixed(2));
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -108,8 +90,6 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
       return;
     }
 
-    const defaultForType = fuelType === 'Petrol' ? (settings.petrolRate ?? 103.5) : (settings.dieselRate ?? 94.5);
-    const currentRate = !isNaN(parsedRate) && parsedRate > 0 ? parsedRate : defaultForType;
     const totalCost = Number((parsedAmount * currentRate).toFixed(2));
 
     onAddRecord({
@@ -181,6 +161,17 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
             >
               Petrol: {settings.currencySymbol}{(settings.petrolRate ?? 103.5).toFixed(2)}/L
             </button>
+            {onOpenRateModal && (
+              <button
+                type="button"
+                onClick={onOpenRateModal}
+                className="px-2 py-0.5 rounded text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 flex items-center gap-1 transition-colors ml-1"
+                title="Fix current Diesel and Petrol rates"
+              >
+                <Edit3 className="w-3 h-3" />
+                <span>Fix Rate</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -311,69 +302,41 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
             </div>
           </div>
 
-          {/* 4. Fuel Rate (Auto-filled by Fuel Type, customizable) */}
+          {/* 4. Coupon Number */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Rate ({settings.currencySymbol}/{settings.defaultUnit})
-              </label>
-              <span className="text-[10px] text-neutral-400 font-mono">
-                {fuelType}
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                ref={rateInputRef}
-                type="number"
-                step="0.01"
-                min="0.1"
-                placeholder="94.50"
-                value={ratePerUnit}
-                onChange={(e) => handleCustomRateChange(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 text-sm font-mono tabular-nums bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 font-bold text-neutral-900 dark:text-neutral-100"
-                title={`Rate for ${fuelType}. Changes here update the custom ${fuelType} rate.`}
-              />
-              <span className="absolute right-2.5 top-2.5 text-xs font-mono font-medium text-neutral-400 pointer-events-none">
-                {settings.currencySymbol}
-              </span>
-            </div>
-          </div>
-
-          {/* 5. Coupon Number */}
-          <div className="lg:col-span-1">
-            <div className="flex justify-between items-center mb-1">
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 truncate">
-                Coupon #
+                Coupon Number <span className="text-amber-500">*</span>
               </label>
             </div>
             <input
               ref={couponInputRef}
               type="text"
-              placeholder="CPN..."
+              placeholder="e.g. CPN-10001"
               value={couponNumber}
               onChange={(e) => setCouponNumber(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs font-mono uppercase bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 font-medium placeholder:normal-case placeholder:font-sans placeholder:text-neutral-400"
+              className="w-full px-3 py-2 text-sm font-mono uppercase bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 font-medium placeholder:normal-case placeholder:font-sans placeholder:text-neutral-400"
               required
             />
           </div>
 
-          {/* 6. Date */}
-          <div className="lg:col-span-1">
+          {/* 5. Date */}
+          <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-1">
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Date
+                Date <span className="text-amber-500">*</span>
               </label>
             </div>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-1.5 py-2 text-xs font-mono bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-neutral-800 dark:text-neutral-200"
+              className="w-full px-2.5 py-2 text-xs font-mono bg-neutral-50 dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-neutral-800 dark:text-neutral-200"
               required
             />
           </div>
 
-          {/* 7. Submit Button */}
+          {/* 6. Submit Button */}
           <div className="lg:col-span-1 flex flex-col justify-end">
             <button
               type="submit"
@@ -406,7 +369,7 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
                 Auto-Calculating:
               </span>
               <span>
-                {parsedAmount.toFixed(2)} {settings.defaultUnit} × {settings.currencySymbol}{parsedRate.toFixed(2)} ({fuelType})
+                {parsedAmount.toFixed(2)} {settings.defaultUnit} × {settings.currencySymbol}{currentRate.toFixed(2)} ({fuelType})
               </span>
             </div>
             <div className="flex items-center gap-2">

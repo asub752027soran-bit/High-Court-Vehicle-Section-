@@ -58,6 +58,12 @@ export const RapidEntryView: React.FC<RapidEntryViewProps> = ({
     }
   }, [suggestedNextCoupon]);
 
+  // Keep ratePerUnit in sync when fuelType or settings change
+  useEffect(() => {
+    const targetRate = fuelType === 'Petrol' ? (settings.petrolRate ?? 103.5) : (settings.dieselRate ?? 94.5);
+    setRatePerUnit(targetRate.toString());
+  }, [fuelType, settings.dieselRate, settings.petrolRate]);
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 

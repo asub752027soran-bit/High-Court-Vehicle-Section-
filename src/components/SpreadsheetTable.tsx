@@ -144,10 +144,8 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
             </button>
             <button
               onClick={() => {
-                if (window.confirm(`Delete ${selectedIds.length} records?`)) {
-                  onDeleteMultiple(selectedIds);
-                  setSelectedIds([]);
-                }
+                onDeleteMultiple(selectedIds);
+                setSelectedIds([]);
               }}
               className="px-2.5 py-1 font-medium bg-red-600 hover:bg-red-700 text-white rounded flex items-center gap-1"
             >
@@ -299,9 +297,20 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                       />
                     </td>
 
-                    {/* Row Index */}
-                    <td className="py-2.5 px-2 text-center font-mono text-neutral-400 text-[11px]">
-                      {index + 1}
+                    {/* Row Index with Hover Delete */}
+                    <td className="py-2.5 px-2 text-center font-mono text-neutral-400 text-[11px] group/rowhead relative">
+                      <span className="group-hover/rowhead:hidden">{index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteRecord(record.id);
+                        }}
+                        className="hidden group-hover/rowhead:flex absolute inset-0 items-center justify-center text-red-600 hover:text-red-700 bg-red-50 dark:bg-red-950/60 rounded"
+                        title={`Click to delete voucher #${record.couponNumber} (${record.vehicleNumber})`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
 
                     {/* Date */}

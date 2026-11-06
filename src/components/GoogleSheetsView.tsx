@@ -42,6 +42,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { RunInGoogleSheetsModal } from './RunInGoogleSheetsModal';
+import { RapidEntryView } from './RapidEntryView';
 
 interface GoogleSheetsViewProps {
 
@@ -152,6 +153,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [updateExistingConfirm, setUpdateExistingConfirm] = useState(true);
   const [showRunInSheetsModal, setShowRunInSheetsModal] = useState(false);
+  const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
 
 
   // Sync inputs if settings change externally
@@ -455,13 +457,28 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
       e.preventDefault();
       startEditCell(selectedCell.row, selectedCell.col);
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (selectedRowIds.length > 0) {
+        e.preventDefault();
+        onDeleteMultiple(selectedRowIds);
+        setSelectedRowIds([]);
+        return;
+      }
       const record = getRecordAtRow(selectedCell.row);
+      if (record && e.shiftKey) {
+        e.preventDefault();
+        onDeleteRecord(record.id);
+        return;
+      }
       const col = COLUMNS[selectedCell.col];
       if (record && col && col.editable) {
         if (col.key === 'fuelAmount') {
           onUpdateRecord(record.id, { fuelAmount: 0, totalCost: 0 });
         } else if (col.key === 'couponNumber') {
           onUpdateRecord(record.id, { couponNumber: '' });
+        } else if (col.key === 'vehicleNumber') {
+          onUpdateRecord(record.id, { vehicleNumber: '' });
+        } else if (col.key === 'date') {
+          onUpdateRecord(record.id, { date: '' });
         }
       }
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -483,6 +500,9 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
     selectedCell,
     getRecordAtRow,
     onUpdateRecord,
+    onDeleteRecord,
+    onDeleteMultiple,
+    selectedRowIds,
     showInCellVehicleDropdown,
   ]);
 
@@ -726,7 +746,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
                       <div className="border-t border-[#dadce0] my-1" />
                       <button
                         onClick={() => {
-                          if (confirm('Wipe all records from this sheet?')) onClearAll();
+                          setShowClearConfirmModal(true);
                           setActiveMenu(null);
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2"
@@ -780,13 +800,26 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
                       </button>
                       <button
                         onClick={() => {
-                          const record = getRecordAtRow(selectedCell.row);
-                          if (record) onDeleteRecord(record.id);
+                          if (selectedRowIds.length > 0) {
+                            onDeleteMultiple(selectedRowIds);
+                            setSelectedRowIds([]);
+                          } else {
+                            const record = getRecordAtRow(selectedCell.row);
+                            if (record) onDeleteRecord(record.id);
+                          }
                           setActiveMenu(null);
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-[#f1f3f4] flex items-center justify-between text-red-600"
+                        className="w-full text-left px-4 py-2 hover:bg-red-50 flex items-center justify-between text-red-600 font-medium"
                       >
-                        <span>Delete Row #{selectedCell.row + 1}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>
+                            {selectedRowIds.length > 1
+                              ? `Delete ${selectedRowIds.length} Selected Rows`
+                              : `Delete Row #${selectedCell.row + 1}`}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-neutral-400 font-mono">Del</span>
                       </button>
                     </div>
                   )}
@@ -961,6 +994,46 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
             >
               <AlignRight className="w-3.5 h-3.5" />
             </button>
+
+            <div className="w-[1px] h-4 bg-[#dadce0] mx-1" />
+
+            {/* Quick Delete Row Button in Ribbon */}
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedRowIds.length > 0) {
+                  onDeleteMultiple(selectedRowIds);
+                  setSelectedRowIds([]);
+                } else {
+                  const record = getRecordAtRow(selectedCell.row);
+                  if (record) {
+                    onDeleteRecord(record.id);
+                  }
+                }
+              }}
+              disabled={!getRecordAtRow(selectedCell.row) && selectedRowIds.length === 0}
+              className={`p-1.5 rounded flex items-center gap-1 transition-colors ${
+                getRecordAtRow(selectedCell.row) || selectedRowIds.length > 0
+                  ? 'hover:bg-red-50 text-red-600 cursor-pointer font-medium'
+                  : 'text-[#9aa0a6] cursor-not-allowed opacity-40'
+              }`}
+              title={
+                selectedRowIds.length > 0
+                  ? `Delete ${selectedRowIds.length} selected row(s)`
+                  : getRecordAtRow(selectedCell.row)
+                  ? `Delete Row #${selectedCell.row + 1}`
+                  : 'Select a row to delete'
+              }
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-[11px] font-medium hidden sm:inline">
+                {selectedRowIds.length > 1
+                  ? `Delete (${selectedRowIds.length})`
+                  : getRecordAtRow(selectedCell.row)
+                  ? `Delete Row #${selectedCell.row + 1}`
+                  : 'Delete Row'}
+              </span>
+            </button>
           </div>
 
           {/* Center-Right: USER'S REQUESTED PETROL & DIESEL PRICE CONTROLS */}
@@ -1021,6 +1094,36 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* BULK SELECTION NOTIFICATION STRIP IF ROWS ARE SELECTED */}
+        {selectedRowIds.length > 0 && (
+          <div className="mt-1 flex items-center justify-between bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg text-xs text-red-900 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{selectedRowIds.length}</span>
+              <span>{selectedRowIds.length === 1 ? 'row' : 'rows'} selected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteMultiple(selectedRowIds);
+                  setSelectedRowIds([]);
+                }}
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-medium rounded shadow-xs flex items-center gap-1 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Selected Rows</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRowIds([])}
+                className="px-2 py-1 text-[#5f6368] hover:text-[#202124] hover:bg-neutral-200 rounded transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ACTIVE FILTER NOTIFICATION STRIP IF FILTERED */}
         {activeVehicleFilter !== 'all' && (
@@ -1169,6 +1272,21 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
           </div>
         )}
 
+        {/* Tab: Rapid Voucher Entry */}
+        {currentTab === 'rapid' && (
+          <div className="p-4 sm:p-6 overflow-y-auto max-w-5xl mx-auto w-full">
+            <RapidEntryView
+              onAddRecord={onAddRecord}
+              knownVehicles={knownVehicles}
+              suggestedNextCoupon={suggestedNextCoupon}
+              recentRecords={records}
+              onDeleteRecord={onDeleteRecord}
+              settings={settings}
+              onSwitchToSpreadsheet={() => onChangeTab('sheet')}
+            />
+          </div>
+        )}
+
         {/* DEFAULT TAB: AUTHENTIC GOOGLE SHEETS GRID */}
         {currentTab === 'sheet' && (
           <table
@@ -1287,13 +1405,29 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
                           );
                         }
                       }}
-                      className={`border-r border-b border-[#dadce0] text-center font-mono text-[11px] select-none cursor-pointer ${
+                      className={`group/rowhead border-r border-b border-[#dadce0] text-center font-mono text-[11px] select-none cursor-pointer relative ${
                         isRowActive
                           ? 'bg-[#e8f0fe] text-[#1a73e8] font-bold'
                           : 'bg-[#f8f9fa] text-[#5f6368] hover:bg-[#e8eaed]'
                       }`}
                     >
-                      {rIdx + 1}
+                      <span className={record ? 'group-hover/rowhead:hidden' : ''}>
+                        {rIdx + 1}
+                      </span>
+                      {record && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteRecord(record.id);
+                            setSelectedRowIds(prev => prev.filter(id => id !== record.id));
+                          }}
+                          className="hidden group-hover/rowhead:flex absolute inset-0 items-center justify-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100"
+                          title={`Click to delete row #${rIdx + 1} (${record.vehicleNumber})`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </td>
 
                     {/* Columns A to G */}
@@ -1736,6 +1870,51 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
           </div>
         )}
 
+        {/* CLEAR ALL CONFIRMATION MODAL (IN-APP, SAFE FOR IFRAMES) */}
+        {showClearConfirmModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl border border-neutral-200 max-w-md w-full p-6 text-neutral-800">
+              <div className="flex items-center gap-3 text-red-600 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-neutral-900">Clear All Sheet Records?</h3>
+                  <p className="text-xs text-neutral-500">
+                    {records.length} voucher {records.length === 1 ? 'record' : 'records'} currently in sheet
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs text-neutral-600 mb-5 leading-relaxed bg-red-50 p-3 rounded-lg border border-red-100">
+                Are you sure you want to delete all entries? This action wipes all logged fuel records and leaves a clean, empty spreadsheet ready for fresh input.
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirmModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClearAll();
+                    setSelectedRowIds([]);
+                    setShowClearConfirmModal(false);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Yes, Wipe All Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right Click Context Menu */}
         {contextMenu && (
           <div
@@ -1804,9 +1983,9 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
           </button>
 
           <button
-            onClick={() => alert('Sheets: Vehicle Section, Fleet Directory, Analytics, Rapid Voucher')}
+            onClick={() => onChangeTab(currentTab === 'sheet' ? 'fleet' : 'sheet')}
             className="p-1 rounded hover:bg-[#e8eaed] text-[#444746]"
-            title="All sheets"
+            title="Toggle sheets"
           >
             <Menu className="w-4 h-4" />
           </button>

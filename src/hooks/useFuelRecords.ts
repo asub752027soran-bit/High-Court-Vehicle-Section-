@@ -205,6 +205,32 @@ export function useFuelRecords() {
     setSettings(prev => ({ ...prev, ...newSettings }));
   }, []);
 
+  const updateRates = useCallback((rates: { dieselRate?: number; petrolRate?: number }, updateExisting = false) => {
+    const nextDiesel = rates.dieselRate !== undefined && !isNaN(rates.dieselRate) ? rates.dieselRate : (settings.dieselRate ?? 94.5);
+    const nextPetrol = rates.petrolRate !== undefined && !isNaN(rates.petrolRate) ? rates.petrolRate : (settings.petrolRate ?? 103.5);
+
+    setSettings(prev => ({
+      ...prev,
+      dieselRate: nextDiesel,
+      petrolRate: nextPetrol,
+      defaultRate: nextDiesel,
+    }));
+
+    if (updateExisting) {
+      setRecords(prev =>
+        prev.map(item => {
+          const isPetrol = item.fuelType === 'Petrol' || item.fuelType === 'Gasoline';
+          const effectiveRate = isPetrol ? nextPetrol : nextDiesel;
+          return {
+            ...item,
+            ratePerUnit: effectiveRate,
+            totalCost: Number((item.fuelAmount * effectiveRate).toFixed(2)),
+          };
+        })
+      );
+    }
+  }, [settings.dieselRate, settings.petrolRate]);
+
   return {
     records,
     settings,
@@ -219,5 +245,6 @@ export function useFuelRecords() {
     resetToDemo,
     clearAll,
     updateSettings,
+    updateRates,
   };
 }
