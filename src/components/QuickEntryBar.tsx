@@ -107,6 +107,11 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
     // Reset amount for next entry
     setFuelAmount('');
 
+    // Reset coupon so suggestedNextCoupon calculates and increments
+    if (settings.autoIncrementCoupon) {
+      setCouponNumber('');
+    }
+
     // Flash success indicator
     setShowSuccessBadge(true);
     setTimeout(() => setShowSuccessBadge(false), 1200);
@@ -349,12 +354,12 @@ export const QuickEntryBar: React.FC<QuickEntryBarProps> = ({
               {showSuccessBadge ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>Done</span>
+                  <span>Saved!</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
+                  <span>Save Entry</span>
                 </>
               )}
             </button>

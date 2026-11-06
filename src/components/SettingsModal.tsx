@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SheetSettings } from '../types/fuel';
-import { Settings, X, Check, RotateCcw, Trash2 } from 'lucide-react';
+import { Settings, X, Check, RotateCcw, Trash2, Sparkles } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,12 +21,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [draft, setDraft] = useState<SheetSettings>({ ...settings });
   const [confirmWipe, setConfirmWipe] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setDraft({ ...settings });
+      setConfirmWipe(false);
+      setIsSaved(false);
+    }
+  }, [isOpen, settings]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
     onSaveSettings(draft);
-    onClose();
+    setIsSaved(true);
+    setTimeout(() => {
+      setIsSaved(false);
+      onClose();
+    }, 450);
   };
 
   return (
@@ -181,6 +194,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* Informational reassurance */}
+          <div className="p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-[11px] text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>Clicking Save automatically recalculates all existing records and updates the website live.</span>
+          </div>
         </div>
 
         <div className="px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 flex justify-end gap-2">
@@ -192,10 +211,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            disabled={isSaved}
+            className={`px-5 py-2 text-xs font-semibold text-white rounded-lg shadow-sm transition-all flex items-center gap-1.5 ${
+              isSaved
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-amber-600 hover:bg-amber-700'
+            }`}
           >
             <Check className="w-4 h-4" />
-            <span>Save Settings</span>
+            <span>{isSaved ? 'Saved to Website!' : 'Save Settings'}</span>
           </button>
         </div>
       </div>

@@ -20,12 +20,14 @@ export const RateSettingsModal: React.FC<RateSettingsModalProps> = ({
   const [dieselInput, setDieselInput] = useState<string>((settings.dieselRate ?? 94.5).toString());
   const [petrolInput, setPetrolInput] = useState<string>((settings.petrolRate ?? 103.5).toString());
   const [updateExisting, setUpdateExisting] = useState<boolean>(true);
+  const [isSaved, setIsSaved] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
       setDieselInput((settings.dieselRate ?? 94.5).toString());
       setPetrolInput((settings.petrolRate ?? 103.5).toString());
       setUpdateExisting(true);
+      setIsSaved(false);
     }
   }, [isOpen, settings.dieselRate, settings.petrolRate]);
 
@@ -46,7 +48,11 @@ export const RateSettingsModal: React.FC<RateSettingsModalProps> = ({
       },
       updateExisting
     );
-    onClose();
+    setIsSaved(true);
+    setTimeout(() => {
+      setIsSaved(false);
+      onClose();
+    }, 450);
   };
 
   return (
@@ -171,10 +177,15 @@ export const RateSettingsModal: React.FC<RateSettingsModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+              disabled={isSaved}
+              className={`px-5 py-2 text-xs font-semibold text-white rounded-lg shadow-sm transition-all flex items-center gap-1.5 ${
+                isSaved
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600'
+              }`}
             >
               <Check className="w-4 h-4" />
-              <span>Save &amp; Fix Rates</span>
+              <span>{isSaved ? 'Saved & Applied!' : 'Save & Fix Rates'}</span>
             </button>
           </div>
         </form>

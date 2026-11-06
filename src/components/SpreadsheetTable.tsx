@@ -321,6 +321,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             type="date"
                             value={cellDraftValue}
                             onChange={(e) => setCellDraftValue(e.target.value)}
+                            onBlur={saveEditing}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEditing();
                               if (e.key === 'Escape') cancelEditing();
@@ -328,8 +329,23 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             autoFocus
                             className="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-neutral-800 border border-amber-500 rounded"
                           />
-                          <button onClick={saveEditing} className="text-emerald-600"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={cancelEditing} className="text-red-500"><X className="w-3.5 h-3.5" /></button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); saveEditing(); }}
+                            title="Save changes"
+                            className="px-1.5 py-0.5 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-0.5 shadow-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); cancelEditing(); }}
+                            title="Cancel"
+                            className="p-1 text-neutral-400 hover:text-red-500 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <div
@@ -353,6 +369,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             type="text"
                             value={cellDraftValue}
                             onChange={(e) => setCellDraftValue(e.target.value)}
+                            onBlur={saveEditing}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEditing();
                               if (e.key === 'Escape') cancelEditing();
@@ -360,8 +377,23 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             autoFocus
                             className="px-1.5 py-0.5 text-xs font-mono uppercase bg-white dark:bg-neutral-800 border border-amber-500 rounded w-28"
                           />
-                          <button onClick={saveEditing} className="text-emerald-600"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={cancelEditing} className="text-red-500"><X className="w-3.5 h-3.5" /></button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); saveEditing(); }}
+                            title="Save changes"
+                            className="px-1.5 py-0.5 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-0.5 shadow-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); cancelEditing(); }}
+                            title="Cancel"
+                            className="p-1 text-neutral-400 hover:text-red-500 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <div
@@ -383,6 +415,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             step="0.01"
                             value={cellDraftValue}
                             onChange={(e) => setCellDraftValue(e.target.value)}
+                            onBlur={saveEditing}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEditing();
                               if (e.key === 'Escape') cancelEditing();
@@ -390,8 +423,23 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             autoFocus
                             className="px-1.5 py-0.5 text-xs font-mono text-right bg-white dark:bg-neutral-800 border border-amber-500 rounded w-20"
                           />
-                          <button onClick={saveEditing} className="text-emerald-600"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={cancelEditing} className="text-red-500"><X className="w-3.5 h-3.5" /></button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); saveEditing(); }}
+                            title="Save changes"
+                            className="px-1.5 py-0.5 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-0.5 shadow-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); cancelEditing(); }}
+                            title="Cancel"
+                            className="p-1 text-neutral-400 hover:text-red-500 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <div
@@ -417,6 +465,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             type="text"
                             value={cellDraftValue}
                             onChange={(e) => setCellDraftValue(e.target.value)}
+                            onBlur={saveEditing}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEditing();
                               if (e.key === 'Escape') cancelEditing();
@@ -424,8 +473,23 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             autoFocus
                             className="px-1.5 py-0.5 text-xs font-mono uppercase bg-white dark:bg-neutral-800 border border-amber-500 rounded w-28"
                           />
-                          <button onClick={saveEditing} className="text-emerald-600"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={cancelEditing} className="text-red-500"><X className="w-3.5 h-3.5" /></button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); saveEditing(); }}
+                            title="Save changes"
+                            className="px-1.5 py-0.5 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-0.5 shadow-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); cancelEditing(); }}
+                            title="Cancel"
+                            className="p-1 text-neutral-400 hover:text-red-500 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <div
@@ -471,6 +535,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             step="0.01"
                             value={cellDraftValue}
                             onChange={(e) => setCellDraftValue(e.target.value)}
+                            onBlur={saveEditing}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') saveEditing();
                               if (e.key === 'Escape') cancelEditing();
@@ -478,8 +543,23 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                             autoFocus
                             className="px-1.5 py-0.5 text-xs font-mono text-right bg-white dark:bg-neutral-800 border border-amber-500 rounded w-20"
                           />
-                          <button onClick={saveEditing} className="text-emerald-600"><Check className="w-3.5 h-3.5" /></button>
-                          <button onClick={cancelEditing} className="text-red-500"><X className="w-3.5 h-3.5" /></button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); saveEditing(); }}
+                            title="Save changes"
+                            className="px-1.5 py-0.5 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center gap-0.5 shadow-xs"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); cancelEditing(); }}
+                            title="Cancel"
+                            className="p-1 text-neutral-400 hover:text-red-500 rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <div

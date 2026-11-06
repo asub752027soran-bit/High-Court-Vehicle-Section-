@@ -201,24 +201,72 @@ export function useFuelRecords() {
     setRecords([]);
   }, []);
 
-  const updateSettings = useCallback((newSettings: Partial<SheetSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  }, []);
+  const updateSettings = useCallback((newSettings: Partial<SheetSettings>, updateExistingRecords = true) => {
+    const nextDiesel = newSettings.dieselRate ?? newSettings.defaultRate ?? settings.dieselRate ?? 94.5;
+    const nextPetrol = newSettings.petrolRate ?? settings.petrolRate ?? 103.5;
+    const nextUnit = newSettings.defaultUnit ?? settings.defaultUnit;
 
-  const updateRates = useCallback((rates: { dieselRate?: number; petrolRate?: number }, updateExisting = false) => {
-    const nextDiesel = rates.dieselRate !== undefined && !isNaN(rates.dieselRate) ? rates.dieselRate : (settings.dieselRate ?? 94.5);
-    const nextPetrol = rates.petrolRate !== undefined && !isNaN(rates.petrolRate) ? rates.petrolRate : (settings.petrolRate ?? 103.5);
-
-    setSettings(prev => ({
-      ...prev,
+    const mergedSettings: SheetSettings = {
+      ...settings,
+      ...newSettings,
       dieselRate: nextDiesel,
       petrolRate: nextPetrol,
       defaultRate: nextDiesel,
-    }));
+      defaultUnit: nextUnit,
+    };
+
+    setSettings(mergedSettings);
+
+    try {
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(mergedSettings));
+    } catch (e) {
+      console.error('Failed to save settings to localStorage', e);
+    }
+
+    if (updateExistingRecords) {
+      setRecords(prev => {
+        const updated = prev.map(item => {
+          const isPetrol = item.fuelType === 'Petrol' || item.fuelType === 'Gasoline';
+          const effectiveRate = isPetrol ? nextPetrol : nextDiesel;
+          return {
+            ...item,
+            fuelUnit: nextUnit,
+            ratePerUnit: effectiveRate,
+            totalCost: Number((item.fuelAmount * effectiveRate).toFixed(2)),
+          };
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save records to localStorage', e);
+        }
+        return updated;
+      });
+    }
+  }, [settings]);
+
+  const updateRates = useCallback((rates: { dieselRate?: number; petrolRate?: number }, updateExisting = true) => {
+    const nextDiesel = rates.dieselRate !== undefined && !isNaN(rates.dieselRate) ? rates.dieselRate : (settings.dieselRate ?? 94.5);
+    const nextPetrol = rates.petrolRate !== undefined && !isNaN(rates.petrolRate) ? rates.petrolRate : (settings.petrolRate ?? 103.5);
+
+    const mergedSettings: SheetSettings = {
+      ...settings,
+      dieselRate: nextDiesel,
+      petrolRate: nextPetrol,
+      defaultRate: nextDiesel,
+    };
+
+    setSettings(mergedSettings);
+
+    try {
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(mergedSettings));
+    } catch (e) {
+      console.error('Failed to save settings to localStorage', e);
+    }
 
     if (updateExisting) {
-      setRecords(prev =>
-        prev.map(item => {
+      setRecords(prev => {
+        const updated = prev.map(item => {
           const isPetrol = item.fuelType === 'Petrol' || item.fuelType === 'Gasoline';
           const effectiveRate = isPetrol ? nextPetrol : nextDiesel;
           return {
@@ -226,10 +274,16 @@ export function useFuelRecords() {
             ratePerUnit: effectiveRate,
             totalCost: Number((item.fuelAmount * effectiveRate).toFixed(2)),
           };
-        })
-      );
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save records to localStorage', e);
+        }
+        return updated;
+      });
     }
-  }, [settings.dieselRate, settings.petrolRate]);
+  }, [settings]);
 
   return {
     records,
