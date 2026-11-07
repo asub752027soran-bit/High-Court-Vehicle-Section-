@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global helper primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for FuelRecord entity
+    function isValidFuelRecord(data) {
+      return data.keys().hasAll(['vehicleNumber', 'fuelAmount', 'fuelUnit', 'couponNumber', 'date', 'fuelType', 'ratePerUnit', 'totalCost'])
+        && data.keys().hasOnly(['id', 'vehicleNumber', 'fuelAmount', 'fuelUnit', 'couponNumber', 'date', 'fuelType', 'ratePerUnit', 'totalCost', 'status', 'driverName', 'stationName', 'odometer', 'createdAt', 'updatedAt'])
+        && data.vehicleNumber is string && data.vehicleNumber.size() >= 3 && data.vehicleNumber.size() <= 30
+        && data.fuelAmount is number && data.fuelAmount > 0 && data.fuelAmount <= 10000
+        && (data.fuelUnit == 'L' || data.fuelUnit == 'gal')
+        && data.couponNumber is string && data.couponNumber.size() >= 1 && data.couponNumber.size() <= 40
+        && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && (data.fuelType == 'Diesel' || data.fuelType == 'Petrol' || data.fuelType == 'Gasoline')
+        && data.ratePerUnit is number && data.ratePerUnit > 0 && data.ratePerUnit <= 1000
+        && data.totalCost is number && data.totalCost >= 0 && data.totalCost <= 10000000
+        && (!('status' in data) || (data.status == 'reconciled' || data.status == 'pending' || data.status == 'flagged'))
+        && (!('driverName' in data) || (data.driverName is string && data.driverName.size() <= 100))
+        && (!('stationName' in data) || (data.stationName is string && data.stationName.size() <= 100))
+        && (!('odometer' in data) || (data.odometer is number && data.odometer >= 0))
+        && (!('createdAt' in data) || data.createdAt is number)
+        && (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Validation helper for SheetSettings entity
+    function isValidSettings(data) {
+      return data.keys().hasAll(['defaultUnit', 'currencySymbol', 'dieselRate', 'petrolRate'])
+        && data.keys().hasOnly(['defaultUnit', 'currencySymbol', 'defaultRate', 'dieselRate', 'petrolRate', 'autoIncrementCoupon', 'couponPrefix', 'updatedAt'])
+        && (data.defaultUnit == 'L' || data.defaultUnit == 'gal')
+        && data.currencySymbol is string && data.currencySymbol.size() <= 10
+        && data.dieselRate is number && data.dieselRate > 0 && data.dieselRate <= 1000
+        && data.petrolRate is number && data.petrolRate > 0 && data.petrolRate <= 1000
+        && (!('defaultRate' in data) || (data.defaultRate is number && data.defaultRate > 0))
+        && (!('autoIncrementCoupon' in data) || data.autoIncrementCoupon is bool)
+        && (!('couponPrefix' in data) || (data.couponPrefix is string && data.couponPrefix.size() <= 20))
+        && (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // 1. Fuel Records Collection
+    match /fuel_records/{recordId} {
+      allow get, list: if true;
+      allow create: if isValidId(recordId) && isValidFuelRecord(incoming());
+      allow update: if isValidId(recordId) && isValidFuelRecord(incoming());
+      allow delete: if isValidId(recordId);
+    }
+
+    // 2. Settings Collection (Shared fleet preferences & rates)
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(settingId) && isValidSettings(incoming());
+      allow delete: if false;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

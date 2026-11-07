@@ -1,5 +1,6 @@
 import React from 'react';
 import { ViewMode } from '../types/fuel';
+import { User } from 'firebase/auth';
 import {
   Table2,
   Zap,
@@ -10,6 +11,10 @@ import {
   Printer,
   Plus,
   Settings,
+  Wifi,
+  LogIn,
+  LogOut,
+  User as UserIcon,
 } from 'lucide-react';
 
 interface TopNavigationProps {
@@ -21,6 +26,10 @@ interface TopNavigationProps {
   onOpenPrint: () => void;
   onOpenSettings?: () => void;
   totalRecordsCount: number;
+  isLiveConnected?: boolean;
+  currentUser?: User | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
 export const TopNavigation: React.FC<TopNavigationProps> = ({
@@ -32,6 +41,10 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
   onOpenPrint,
   onOpenSettings,
   totalRecordsCount,
+  isLiveConnected = true,
+  currentUser,
+  onSignIn,
+  onSignOut,
 }) => {
   return (
     <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 sticky top-0 z-30">
@@ -145,6 +158,59 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
               >
                 <Settings className="w-4 h-4" />
               </button>
+            )}
+
+            {/* Live Real-time Sync Indicator */}
+            <div
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0"
+              title="All changes sync to everyone in real-time across all devices"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Live Cloud Sync</span>
+            </div>
+
+            {/* Optional Google Account Sign-In */}
+            {currentUser ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                {currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt={currentUser.displayName || 'User'}
+                    className="w-7 h-7 rounded-full border border-neutral-200 dark:border-neutral-700"
+                    title={`Signed in as ${currentUser.email || currentUser.displayName}`}
+                  />
+                ) : (
+                  <div
+                    className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 flex items-center justify-center text-xs font-bold"
+                    title={`Signed in as ${currentUser.email || 'User'}`}
+                  >
+                    <UserIcon className="w-3.5 h-3.5" />
+                  </div>
+                )}
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    title="Sign out"
+                    className="p-1.5 text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              onSignIn && (
+                <button
+                  onClick={onSignIn}
+                  title="Sign in with Google (optional)"
+                  className="px-2.5 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Google Sign In</span>
+                </button>
+              )
             )}
 
             <button

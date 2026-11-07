@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "FuelRecord": {
+      "title": "FuelRecord",
+      "description": "Fuel voucher record logged for fleet vehicles",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "vehicleNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 30
+        },
+        "fuelAmount": {
+          "type": "number"
+        },
+        "fuelUnit": {
+          "type": "string",
+          "enum": ["L", "gal"]
+        },
+        "couponNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "fuelType": {
+          "type": "string",
+          "enum": ["Diesel", "Petrol", "Gasoline"]
+        },
+        "ratePerUnit": {
+          "type": "number"
+        },
+        "totalCost": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["reconciled", "pending", "flagged"]
+        },
+        "driverName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "stationName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "odometer": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["vehicleNumber", "fuelAmount", "fuelUnit", "couponNumber", "date", "fuelType", "ratePerUnit", "totalCost"]
+    },
+    "SheetSettings": {
+      "title": "SheetSettings",
+      "description": "Global fleet ledger preferences and rates",
+      "type": "object",
+      "properties": {
+        "defaultUnit": {
+          "type": "string",
+          "enum": ["L", "gal"]
+        },
+        "currencySymbol": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "defaultRate": {
+          "type": "number"
+        },
+        "dieselRate": {
+          "type": "number"
+        },
+        "petrolRate": {
+          "type": "number"
+        },
+        "autoIncrementCoupon": {
+          "type": "boolean"
+        },
+        "couponPrefix": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["defaultUnit", "currencySymbol", "dieselRate", "petrolRate"]
+    }
+  },
+  "firestore": {
+    "/fuel_records/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/FuelRecord"
+      },
+      "description": "Collection of fuel voucher documents for fleet operations"
+    },
+    "/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/SheetSettings"
+      },
+      "description": "Global fleet settings including live diesel and petrol rates"
+    }
+  }
+}

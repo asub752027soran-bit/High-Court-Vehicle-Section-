@@ -31,6 +31,10 @@ export default function App() {
     clearAll,
     updateSettings,
     updateRates,
+    isLiveConnected,
+    currentUser,
+    signInWithGoogle,
+    signOutUser,
   } = useFuelRecords();
 
   const [currentView, setCurrentView] = useState<ViewMode>('spreadsheet');
@@ -80,6 +84,10 @@ export default function App() {
         onOpenPrint={() => setIsPrintModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         totalRecordsCount={records.length}
+        isLiveConnected={isLiveConnected}
+        currentUser={currentUser}
+        onSignIn={signInWithGoogle}
+        onSignOut={signOutUser}
       />
 
       {/* 2. Main Workspace */}
